@@ -4041,3 +4041,23 @@ schedule.json watch items pruned (19.7KB).
 
   Cost so far: one extra $5 loss, which stayed within the event cap.
   Status: PROPOSED.
+
+## 2026-10-08T13:35Z - operator machine: gamma-api returns HTTP 451 (geo-block)
+
+- **Evidence:** in the 13:3xZ FULL cycle on the operator machine (an
+  interactive session; `core/lease.py` push also got a GitHub 403), every
+  gamma-api.polymarket.com call returned `HTTP Error 451: Unavailable For
+  Legal Reasons`. That covered all 4 discovery queries in `core/scan.py`
+  (0 candidates) and every per-market fetch in `core/resolve.py`. The
+  cloud cycles at 08:21Z, 10:30Z and 12:45Z the same day reached gamma
+  without trouble, so the block depends on this host's network or egress
+  location, not on any query.
+- **Effect:** an operator-machine cycle can't settle, scan, quote or
+  monitor. It also makes `resolve.py` slow (3 retries x every open
+  bet/forecast).
+- **Ask (operator, environment / core):** (a) run operator-machine cycles
+  only from an egress where gamma is reachable. (b) Optionally, have
+  `core/scan.py`/`core/resolve.py` fail fast on the first 451 instead of
+  retrying every id, and have `loop.sh` downgrade to a LIGHT tick when a
+  gamma probe returns 451.
+  Status: PROPOSED.
